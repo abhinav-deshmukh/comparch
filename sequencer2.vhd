@@ -2,7 +2,7 @@ library IEEE;
 use IEEE.std_logic_1164.all;
 use IEEE.std_logic_unsigned.all;
 use work.constants.all;
---hI JOSEPH
+--hI Abhinav
 entity sequencer2 is
     port(
 		rst                : in  std_logic;
