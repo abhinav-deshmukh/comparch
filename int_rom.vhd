@@ -18,15 +18,16 @@ architecture Behavioral of int_rom is
 	type rom_type is array (0 to 4095) of STD_LOGIC_VECTOR (7 downto 0);
 	constant PROGRAM : ROM_TYPE := (
 
-	"11101001", --LABEL1: MOV A,R1
-	"00100100", --ADD A,#01H
-	"00000001",
-	"11111001", --MOV R1,A
-	"10111001", --CJNE R1,#04H,LABEL1
-	"00000100",
-	"11111001",
-	"10001001", --MOV 90H,R1
-	"10010000",
+--	"11101001", --LABEL1: MOV A,R1
+--	"00100100", --ADD A,#01H
+--	"00000001",
+--	"11111001", --MOV R1,A
+--	"10111001", --CJNE R1,#04H,LABEL1
+--	"00000100",
+--	"11111001",
+--	"10001001", --MOV 90H,R1
+--	"10010000",
+"00000100",
 	others => "00000000"
 );
 

@@ -118,11 +118,11 @@ BEGIN
 
      wait for clk_period*10;
 
-      -- insert stimulus here 
+      --insert stimulus here 
 		rst <= '1';
 		wait for 100 ns;
-      pc_debug <= "0000000000000100";
-		wait for 100 ns;
+      --pc_debug <= "0000000000000100";
+		--wait for 100 ns;
 
       wait;
    end process;

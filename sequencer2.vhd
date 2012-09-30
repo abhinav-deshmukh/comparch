@@ -121,6 +121,8 @@ begin
             i_ram_addr <= a;
             i_ram_rdBit <= '0';
             i_ram_wrBit <= '1';
+				i_ram_rdByte <= '0';
+				i_ram_wrByte <= '1';
         end START_WR_RAM;
 
 -------------------------------------------------------------------------------
@@ -196,7 +198,7 @@ begin
 	IR_2 <= (others => '0');
 	IR_3 <= (others => '0');
 	PC <= (others => '0');
-	--PC <= "0000000000100111";
+--	PC <= "0000000000100111";
 	AR <= (others => '0');
 	DR <= (others => '0');
 	pc_debug <= (others => '1');
@@ -215,16 +217,21 @@ begin
 					exe_state<= E1;		
 					
 				when E1	=> --decode instruction
-					IR_1<=i_rom_data;	--read instruction from ROM to IR_1 , 1 byte
-					i_rom_addr <= PC;
+					PC (15 downto 8) <= alu_ans_H; 
+					PC (7 downto 0) <=alu_ans_L;
+					IR_1<=i_rom_data;	--read instruction from ROM to IR_1 , 1 byte	
 					ACC<= i_ram_doByte;--preload data of ACC
 					i_ram_addr<= xD0; --read PSW
 					exe_state <= E2;
 					
 				when E2 =>
-					IR_2<= i_rom_data;--preload IR_2
+					i_rom_addr <= PC;
 					psw_temp <= i_ram_doByte;--preload data of PSW
 					SET_PSW(psw_temp);
+					exe_state <=E3;
+					
+				when E3 =>
+					IR_2<= i_rom_data;--preload IR_2
 					exe_state<= E0;
 					cpu_state<=T1;
 				
@@ -383,8 +390,9 @@ begin
 								exe_state <= E2;
 								
 							when E2 =>
-								START_WR_RAM (xE0);
+							START_WR_RAM(xE0);
 								i_ram_diByte <= alu_ans_L;
+
 								exe_state <= E3;
 								
 							when E3 =>
