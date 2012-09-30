@@ -7,8 +7,8 @@ entity sequencer2 is
     port(
 		rst                : in  std_logic;
 		clk              	 : in  std_logic;
-		ale		  	 : out std_logic;
-		psen		 	 : out std_logic;
+		ale		  	 : out std_logic; --Address Latch Enable
+		psen		 	 : out std_logic; --Program Store Enable
 
 		alu_op_code	 	 : out  std_logic_vector (3 downto 0);
 		alu_src_1L		 : out  std_logic_vector (7 downto 0);
@@ -313,7 +313,27 @@ begin
 						when others =>  null;
 
                 	end case;
+						
+						
 -------------------------------------------------------------------------------------------------------------------------
+----------------AJMP
+					 when "---00001" =>
+						case exe_state is
+							when E0 =>
+								PC <= PC+1; --should we use the ALU here (would tht be more 'pure' ?
+								exe_state <= E1;
+								
+							when E1 =>
+								PC <= PC(15 downto 11)&IR_1(7 downto 5)&IR_2;
+								exe_state <= E2;
+								
+							when E2 =>
+								exe_state <= E0;
+								cpu_state <= T0;
+								
+							when others => null;
+						end case;
+
 ----------------JMP
                 when "01110011" =>
                 	case exe_state is
@@ -344,11 +364,126 @@ begin
                 			cpu_state <= T0;
                 		when others => null;
                 	end case;
-                	
-
-
-
-
+-------------------------------------------------------------------------------------------------------------------------
+----------------INC
+-----------------------INC A
+					when "00000100" =>
+						case exe_state is
+							when E0 =>
+								START_RD_RAM(xE0,'1'); --read ACC
+								exe_state <= E1;
+								
+							when E1 =>
+								alu_src_1L <= i_ram_doByte; --load ACC contents in src 1
+								--alu_src_1H <= "00000000";
+								--alu_src_2L <= "00000001";
+								--alu_src_2H <= "00000000";
+								alu_op_code <= ALU_OPC_INC;
+								alu_by_wd <= BYTE;
+								exe_state <= E2;
+								
+							when E2 =>
+								START_WR_RAM (xE0);
+								i_ram_diByte <= alu_ans_L;
+								exe_state <= E3;
+								
+							when E3 =>
+								STOP_RD_WR_RAM;
+                			SHUT_DOWN_ALU;
+                			exe_state <= E0;
+                			cpu_state <= T0;
+								
+                		    when others => null;
+						end case;		
+----------------------------------------------------------------------------------------------------------------------------------------
+--------------------------INC Rn
+					when "00001---" =>
+						case exe_state is
+							when E0 =>
+								START_RD_RAM("000" & reg_rs1 & reg_rs0 & IR_1(2 downto 0),'1'); -- fetch address of Rn into RAM
+								exe_state <= E1;
+								
+							when E1 =>
+								alu_src_1L <= i_Ram_doByte;
+								alu_op_code <= ALU_OPC_INC;
+								alu_by_wd <= BYTE;
+								exe_state <= E2;
+								
+							when E2 =>
+								START_WR_RAM ("000" & reg_rs1 & reg_rs0 & IR_1(2 downto 0)); --Write inc value to Reg
+								i_Ram_diByte <= alu_ans_L;
+								exe_state <= E3;
+							
+							when E3 =>
+								STOP_RD_WR_RAM;
+                			SHUT_DOWN_ALU;
+                			exe_state <= E0;
+                			cpu_state <= T0;
+								
+							when others => null;
+						end case;
+--------------------------------------------------------------------------------------------------------------------
+---------------------------- INC direct
+					when "00000101" => 
+						case exe_state is
+							when E0 =>
+								PC <= PC+1; --2 byte instruction
+								START_RD_RAM (IR_2,'1');
+								exe_state <= E1;
+								
+							when E1 =>
+								alu_src_1L <= i_ram_doByte;
+								alu_op_code <= ALU_OPC_INC;
+								alu_by_wd <= BYTE;
+								exe_state <= E2;
+								
+							when E2 =>
+								START_WR_RAM (IR_2);
+								i_ram_diByte <= alu_ans_L;
+								exe_state <= E3;
+								
+							when E3 =>
+								STOP_RD_WR_RAM;
+                			SHUT_DOWN_ALU;
+                			exe_state <= E0;
+                			cpu_state <= T0;
+								
+							when others => null;
+						end case;
+--------------------------------------------------------------------------------------------------------------------------
+------------------- INC @Ri
+					when "0000011-" =>
+						case exe_state is 
+							when E0 =>
+								
+								START_RD_RAM("000" & reg_rs1 & reg_rs0 & IR_1(2 downto 0),'1');
+								exe_state <= E1;
+								
+							when E1 =>
+								temp_sig8 <= i_ram_doByte;
+								START_RD_RAM(temp_sig8,'1'); --faster if replace with ram_addr
+								exe_state <= E2;
+								
+							when E2 =>
+								alu_src_1L <= i_ram_doByte;
+								alu_op_code <= ALU_OPC_INC;
+								alu_by_wd <= BYTE;
+								exe_state <= E3;
+								
+							when E3 =>
+								START_WR_RAM (temp_sig8);
+								i_ram_diByte <= alu_ans_L;
+								exe_state <= E4;
+								
+							when E4=>
+								STOP_RD_WR_RAM;
+                			SHUT_DOWN_ALU;
+                			exe_state <= E0;
+                			cpu_state <= T0;
+								
+							when others  => null;
+						end case;
+--------------------------------------------------------------------------------------------------------------------------
 				when others => 				
 					exe_state <= E0;	
 					cpu_state <= T0;
