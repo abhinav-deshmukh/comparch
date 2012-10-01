@@ -28,6 +28,7 @@ architecture Behavioral of int_rom is
 --	"10001001", --MOV 90H,R1
 --	"10010000",
 "00000100",
+
 	others => "00000000"
 );
 
